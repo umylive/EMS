@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add smooth transition for theme changes */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Calendar dark mode styles */
+.dark .react-calendar {
+  background-color: #1f2937;
+  color: white;
+  border-color: #374151;
+}
+
+.dark .react-calendar__tile {
+  color: white;
+}
+
+.dark .react-calendar__tile:enabled:hover,
+.dark .react-calendar__tile:enabled:focus {
+  background-color: #374151;
+}
+
+.dark .react-calendar__tile--now {
+  background-color: #374151;
+}
+
+.dark .react-calendar__tile--active {
+  background-color: #0284c7 !important;
+  color: white;
+}
+
+.dark .react-calendar__navigation button:enabled:hover,
+.dark .react-calendar__navigation button:enabled:focus {
+  background-color: #374151;
+}
+
+.dark .react-calendar__month-view__days__day--weekend {
+  color: #f87171;
+}
+
+/* DataTable dark mode styles */
+.dark .datatable-header {
+  background-color: #1f2937;
+  color: white;
+}
+
+.dark .datatable-row:hover {
+  background-color: #374151;
+}
