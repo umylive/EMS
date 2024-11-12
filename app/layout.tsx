@@ -5,14 +5,6 @@ import { Inter } from "next/font/google";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// Verify environment variables are set
-if (
-  !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-) {
-  console.warn("Missing Supabase environment variables");
-}
-
 export const metadata: Metadata = {
   title: "Employee Management System",
   description: "Modern employee management system",
