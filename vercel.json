@@ -2,6 +2,6 @@
   "version": 2,
   "public": true,
   "buildCommand": "npm run build",
-  "ignoreCommand": "npm rn lint",
+  "ignoreCommand": "npm run lint",
   "installCommand": "npm install --legacy-peer-deps"
 }
