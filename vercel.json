@@ -1,12 +1,7 @@
 {
   "version": 2,
+  "public": true,
   "buildCommand": "npm run build",
-  "installCommand": "npm install --legacy-peer-deps",
-  "framework": "nextjs",
-  "builds": [
-    {
-      "src": "next.config.js",
-      "use": "@vercel/next"
-    }
-  ]
+  "ignoreCommand": "npm run lint",
+  "installCommand": "npm install"
 }
