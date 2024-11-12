@@ -1,9 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
+    // This will not fail the build even if there are TypeScript errors
     ignoreBuildErrors: true,
   },
   eslint: {
+    // This will not fail the build even if there are ESLint errors
     ignoreDuringBuilds: true,
   },
   reactStrictMode: true,
@@ -12,15 +14,6 @@ const nextConfig = {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
-  // Add build configuration
-  experimental: {
-    // This will allow better error handling during build
-    missingSuspenseWithCSRError: false,
-  },
-  // Optimize build output
-  output: "standalone",
-  // Add poweredByHeader for security
-  poweredByHeader: false,
 };
 
 module.exports = nextConfig;
