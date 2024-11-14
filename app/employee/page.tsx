@@ -6,17 +6,44 @@ import { supabase } from "@/lib/supabase";
 import type { Shift, Note, GeneralMessage } from "@/lib/supabase";
 import Header from "@/app/components/shared/Header";
 import Calendar from "react-calendar";
-import { format } from "date-fns";
+import { format, parseISO, isSameDay } from "date-fns";
 import { Loader2 } from "lucide-react";
 
 export default function EmployeeDashboard() {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [shifts, setShifts] = useState<Shift[]>([]);
+  const [allMonthShifts, setAllMonthShifts] = useState<Shift[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState("");
   const [announcements, setAnnouncements] = useState<GeneralMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Function to parse time string into hours
+  const parseTimeToHours = (timeStr: string) => {
+    const [hours] = timeStr.split(":").map(Number);
+    return hours;
+  };
+
+  // Function to determine shift period
+  const getShiftPeriod = (timeIn: string) => {
+    const startHour = parseTimeToHours(timeIn);
+    if (startHour < 12) return "morning";
+    if (startHour < 17) return "afternoon";
+    return "evening";
+  };
+
+  const getTileClassName = ({ date }: { date: Date }) => {
+    const shiftsForDay = allMonthShifts.filter((shift) =>
+      isSameDay(parseISO(shift.date), date)
+    );
+
+    if (shiftsForDay.length === 0) return "";
+
+    const shift = shiftsForDay[0]; // Use the first shift of the day
+    const period = getShiftPeriod(shift.time_in);
+    return `work-day shift-${period}`;
+  };
 
   const calendarProps = {
     onChange: (value: any) => {
@@ -26,6 +53,7 @@ export default function EmployeeDashboard() {
     },
     value: selectedDate,
     className: "shadow-sm rounded-lg p-4",
+    tileClassName: getTileClassName,
   } as const;
 
   useEffect(() => {
@@ -34,6 +62,25 @@ export default function EmployeeDashboard() {
 
       setIsLoading(true);
       try {
+        // Fetch all shifts for the current month
+        const startOfMonth = new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          1
+        );
+        const endOfMonth = new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth() + 1,
+          0
+        );
+
+        const { data: monthShiftsData } = await supabase
+          .from("shifts")
+          .select("*")
+          .eq("user_id", user.id)
+          .gte("date", format(startOfMonth, "yyyy-MM-dd"))
+          .lte("date", format(endOfMonth, "yyyy-MM-dd"));
+
         // Fetch shifts for the selected date
         const { data: shiftsData } = await supabase
           .from("shifts")
@@ -41,7 +88,7 @@ export default function EmployeeDashboard() {
           .eq("user_id", user.id)
           .eq("date", format(selectedDate, "yyyy-MM-dd"));
 
-        // Fetch all notes for the selected date (both personal and manager notes)
+        // Fetch notes
         const { data: notesData } = await supabase
           .from("notes")
           .select("*")
@@ -53,6 +100,7 @@ export default function EmployeeDashboard() {
           .from("general_messages")
           .select("*");
 
+        if (monthShiftsData) setAllMonthShifts(monthShiftsData);
         if (shiftsData) setShifts(shiftsData);
         if (notesData) setNotes(notesData);
         if (announcementsData) setAnnouncements(announcementsData);
@@ -151,20 +199,41 @@ export default function EmployeeDashboard() {
                       color: inherit;
                     }
 
-                    .react-calendar__month-view__days__day {
-                      padding: 8px;
-                      color: inherit;
-                    }
-
                     .react-calendar__tile {
+                      position: relative;
                       text-align: center;
                       padding: 8px;
                       border-radius: 8px;
                     }
 
-                    .react-calendar__tile:enabled:hover,
-                    .react-calendar__tile:enabled:focus {
-                      background-color: rgb(239 246 255 / 0.2);
+                    .work-day {
+                      font-weight: 500;
+                    }
+
+                    /* Shift period styles */
+                    .shift-morning {
+                      background-color: rgba(255, 182, 71, 0.2) !important;
+                    }
+
+                    .shift-afternoon {
+                      background-color: rgba(92, 182, 255, 0.2) !important;
+                    }
+
+                    .shift-evening {
+                      background-color: rgba(155, 89, 182, 0.2) !important;
+                    }
+
+                    /* Dark mode adjustments */
+                    .dark .shift-morning {
+                      background-color: rgba(255, 182, 71, 0.3) !important;
+                    }
+
+                    .dark .shift-afternoon {
+                      background-color: rgba(92, 182, 255, 0.3) !important;
+                    }
+
+                    .dark .shift-evening {
+                      background-color: rgba(155, 89, 182, 0.3) !important;
                     }
 
                     .react-calendar__tile--now {
@@ -180,39 +249,28 @@ export default function EmployeeDashboard() {
                     .react-calendar__tile--active:enabled:focus {
                       background: #1d4ed8 !important;
                     }
-
-                    .dark .react-calendar {
-                      color: #fff;
-                    }
-
-                    .dark .react-calendar__navigation button:enabled:hover,
-                    .dark .react-calendar__navigation button:enabled:focus {
-                      background-color: rgb(55 65 81 / 0.5);
-                    }
-
-                    .dark .react-calendar__tile:enabled:hover,
-                    .dark .react-calendar__tile:enabled:focus {
-                      background-color: rgb(55 65 81 / 0.5);
-                    }
-
-                    .dark .react-calendar__tile--now {
-                      background: rgb(59 130 246 / 0.2);
-                    }
-
-                    .dark .react-calendar__month-view__days__day--weekend {
-                      color: #f87171;
-                    }
-
-                    .dark
-                      .react-calendar__month-view__days__day--neighboringMonth {
-                      color: rgb(156 163 175);
-                    }
                   `}</style>
                   <Calendar {...calendarProps} />
                 </div>
               </div>
-              <div className="text-center mt-4 text-sm text-gray-600 dark:text-gray-400">
-                Selected Date: {format(selectedDate, "MMMM d, yyyy")}
+              <div className="text-center mt-4 space-y-2">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Selected Date: {format(selectedDate, "MMMM d, yyyy")}
+                </div>
+                <div className="flex justify-center flex-wrap gap-4 text-xs">
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-orange-200 dark:bg-orange-900/30 rounded mr-2"></div>
+                    <span>Morning Shift (Before 12 PM)</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-blue-200 dark:bg-blue-900/30 rounded mr-2"></div>
+                    <span>Afternoon Shift (12 PM - 5 PM)</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-purple-200 dark:bg-purple-900/30 rounded mr-2"></div>
+                    <span>Evening Shift (After 5 PM)</span>
+                  </div>
+                </div>
               </div>
             </div>
 

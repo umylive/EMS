@@ -14,6 +14,12 @@ export interface Shift {
   employeeName?: string;
 }
 
+export interface ShiftWithUser extends Shift {
+  users: {
+    name: string;
+  };
+}
+
 export interface Note {
   id: number;
   user_id: string;
@@ -35,7 +41,30 @@ export interface SupabaseResponse<T> {
   error: Error | null;
 }
 
+export interface TimeFilterProps {
+  shifts: Shift[];
+  onFilterChange: (filteredShifts: Shift[]) => void;
+  originalShifts: Shift[];
+}
+
+export interface LocationStat {
+  location: string;
+  count: number;
+  percentage: string;
+}
+
 export type CalendarChangeHandler = (
   value: Date | null,
   event: React.MouseEvent<HTMLButtonElement, MouseEvent>
 ) => void;
+
+// Time filter specific types
+export interface TimeRange {
+  startTime: string;
+  endTime: string;
+}
+
+export interface FilteredShifts {
+  timeFiltered: Shift[];
+  locationFiltered: Shift[];
+}

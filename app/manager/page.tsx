@@ -1,19 +1,20 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useAuth } from "@/app/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
 import type {
   User,
   Shift,
   Note,
   GeneralMessage,
   SupabaseResponse,
+  LocationStat,
+  ShiftWithUser,
 } from "@/types";
-
-import { useState, useEffect } from "react";
-import { useAuth } from "@/app/hooks/useAuth";
-import { supabase } from "@/lib/supabase";
-
 import Header from "@/app/components/shared/Header";
 import DataTable from "@/app/components/shared/DataTable";
+import TimeFilter from "@/app/components/shared/TimeFilter";
 import Calendar from "react-calendar";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
@@ -27,35 +28,6 @@ const CHART_COLORS = [
   "#8884d8", // Purple
 ];
 
-type LocationStat = {
-  location: string;
-  count: number;
-  percentage: string;
-};
-
-type ShiftWithUser = {
-  id: number;
-  user_id: string;
-  date: string;
-  time_in: string;
-  time_out: string;
-  location: string;
-  users: {
-    name: string;
-  };
-};
-
-type NoteWithUser = {
-  id: number;
-  user_id: string;
-  content: string;
-  date: string;
-  is_manager_note: boolean;
-  users: {
-    name: string;
-  };
-};
-
 type EmployeeNote = {
   id: number;
   user_id: string;
@@ -66,12 +38,13 @@ type EmployeeNote = {
     name: string;
   };
 };
-
 export default function ManagerDashboard() {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [employees, setEmployees] = useState<User[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
+  const [filteredTimeShifts, setFilteredTimeShifts] = useState<Shift[]>([]);
+  const [originalShifts, setOriginalShifts] = useState<Shift[]>([]);
   const [notes, setNotes] = useState<EmployeeNote[]>([]);
   const [newNote, setNewNote] = useState("");
   const [generalMessage, setGeneralMessage] = useState("");
@@ -105,7 +78,7 @@ export default function ManagerDashboard() {
           .select("*")
           .eq("role", "employee");
 
-        // Fetch shifts for selected date with proper typing
+        // Fetch shifts for selected date
         const { data: shiftsData, error: shiftsError } = (await supabase
           .from("shifts")
           .select(
@@ -131,7 +104,7 @@ export default function ManagerDashboard() {
           return;
         }
 
-        // Format the shifts data with proper type checking
+        // Format shifts data
         const formattedShifts =
           shiftsData?.map((shift) => ({
             id: shift.id,
@@ -164,7 +137,7 @@ export default function ManagerDashboard() {
           };
         });
 
-        // Fetch notes for selected date
+        // Fetch notes
         const { data: notesData } = await supabase
           .from("notes")
           .select(
@@ -190,6 +163,8 @@ export default function ManagerDashboard() {
 
         if (employeesData) setEmployees(employeesData);
         setShifts(formattedShifts);
+        setOriginalShifts(formattedShifts);
+        setFilteredTimeShifts(formattedShifts);
         setLocations(uniqueLocations);
         setLocationStats(locationCounts);
 
@@ -217,7 +192,6 @@ export default function ManagerDashboard() {
 
     fetchData();
   }, [selectedDate]);
-
   const handleAddOrUpdateNote = async () => {
     if (!user || !selectedEmployeeId || !newNote.trim()) {
       alert("Please select an employee and enter a note");
@@ -226,7 +200,6 @@ export default function ManagerDashboard() {
 
     try {
       if (editingNoteId) {
-        // Update existing note
         const { error } = await supabase
           .from("notes")
           .update({
@@ -236,7 +209,6 @@ export default function ManagerDashboard() {
 
         if (error) throw error;
 
-        // Update local state
         setNotes((prevNotes) =>
           prevNotes.map((note) =>
             note.id === editingNoteId
@@ -247,7 +219,6 @@ export default function ManagerDashboard() {
 
         setEditingNoteId(null);
       } else {
-        // Add new note
         const { data: newNoteData, error } = await supabase
           .from("notes")
           .insert([
@@ -333,7 +304,7 @@ export default function ManagerDashboard() {
     { key: "time_out", label: "Time Out" },
   ];
 
-  const filteredShifts = shifts.filter((shift) =>
+  const filteredShifts = filteredTimeShifts.filter((shift) =>
     selectedLocation === "all" ? true : shift.location === selectedLocation
   );
 
@@ -350,113 +321,12 @@ export default function ManagerDashboard() {
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4 text-center">
                 Schedule View
               </h2>
-              <div className="flex justify-center">
-                <div className="w-full max-w-md">
-                  <style jsx global>{`
-                    .react-calendar {
-                      width: 100%;
-                      max-width: 100%;
-                      background: inherit;
-                      border: none;
-                      font-family: inherit;
-                    }
-
-                    .react-calendar__navigation {
-                      display: flex;
-                      justify-content: center;
-                      margin-bottom: 1rem;
-                    }
-
-                    .react-calendar__navigation button {
-                      min-width: 44px;
-                      background: none;
-                      font-size: 16px;
-                      padding: 8px;
-                      color: inherit;
-                    }
-
-                    .react-calendar__navigation button:disabled {
-                      background-color: transparent;
-                    }
-
-                    .react-calendar__navigation button:enabled:hover,
-                    .react-calendar__navigation button:enabled:focus {
-                      background-color: rgb(239 246 255 / 0.2);
-                      border-radius: 8px;
-                    }
-
-                    .react-calendar__month-view__weekdays {
-                      text-align: center;
-                      text-transform: uppercase;
-                      font-weight: bold;
-                      font-size: 0.75rem;
-                      color: inherit;
-                    }
-
-                    .react-calendar__month-view__days__day {
-                      padding: 8px;
-                      color: inherit;
-                    }
-
-                    .react-calendar__tile {
-                      text-align: center;
-                      padding: 8px;
-                      border-radius: 8px;
-                    }
-
-                    .react-calendar__tile:enabled:hover,
-                    .react-calendar__tile:enabled:focus {
-                      background-color: rgb(239 246 255 / 0.2);
-                    }
-
-                    .react-calendar__tile--now {
-                      background: rgb(59 130 246 / 0.1);
-                    }
-
-                    .react-calendar__tile--active {
-                      background: #2563eb !important;
-                      color: white;
-                    }
-
-                    .react-calendar__tile--active:enabled:hover,
-                    .react-calendar__tile--active:enabled:focus {
-                      background: #1d4ed8 !important;
-                    }
-
-                    .dark .react-calendar {
-                      color: #fff;
-                    }
-
-                    .dark .react-calendar__navigation button:enabled:hover,
-                    .dark .react-calendar__navigation button:enabled:focus {
-                      background-color: rgb(55 65 81 / 0.5);
-                    }
-
-                    .dark .react-calendar__tile:enabled:hover,
-                    .dark .react-calendar__tile:enabled:focus {
-                      background-color: rgb(55 65 81 / 0.5);
-                    }
-
-                    .dark .react-calendar__tile--now {
-                      background: rgb(59 130 246 / 0.2);
-                    }
-
-                    .dark .react-calendar__month-view__days__day--weekend {
-                      color: #f87171;
-                    }
-
-                    .dark
-                      .react-calendar__month-view__days__day--neighboringMonth {
-                      color: rgb(156 163 175);
-                    }
-                  `}</style>
-                  <Calendar {...calendarProps} />
-                </div>
-              </div>
+              <Calendar {...calendarProps} />
               <div className="text-center mt-4 text-sm text-gray-600 dark:text-gray-400">
                 Selected Date: {format(selectedDate, "MMMM d, yyyy")}
               </div>
             </div>
+
             {/* Location Filter */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
@@ -478,7 +348,14 @@ export default function ManagerDashboard() {
               </select>
             </div>
 
-            {/* Statistics Table */}
+            {/* Time Filter */}
+            <TimeFilter
+              shifts={shifts}
+              onFilterChange={setFilteredTimeShifts}
+              originalShifts={originalShifts}
+            />
+
+            {/* Location Statistics */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Location Statistics
