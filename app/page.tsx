@@ -162,13 +162,6 @@ export default function LoginPage() {
                 "Sign in"
               )}
             </button>
-
-            {/* Test Credentials Helper */}
-            <div className="text-center text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <p>Test Accounts:</p>
-              <p>Manager: admin / admin</p>
-              <p>Employee: admin / admin123</p>
-            </div>
           </form>
         </div>
       </div>
