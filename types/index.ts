@@ -1,70 +1,93 @@
+// ! USER INTERFACE
+// Represents a user in the system
 export interface User {
-  id: string;
-  name: string;
-  role: "manager" | "employee";
+  id: string; // Unique identifier (employee ID)
+  name: string; // User's full name
+  role: "manager" | "employee"; // User's role with strict type
 }
 
+// ! SHIFT INTERFACE
+// Represents a basic work shift record
 export interface Shift {
-  id: number;
-  user_id: string;
-  date: string;
-  time_in: string;
-  time_out: string;
-  location: string;
-  employeeName?: string;
+  id: number; // Unique shift identifier
+  user_id: string; // Reference to user ID
+  date: string; // Shift date
+  time_in: string; // Clock-in time
+  time_out: string; // Clock-out time
+  location: string; // Work location
+  employeeName?: string; // Optional employee name for display
 }
 
+// ! SHIFT WITH USER INTERFACE
+// Extends Shift interface to include user details
 export interface ShiftWithUser extends Shift {
   users: {
-    name: string;
+    // Nested user information
+    name: string; // User's name from join
   };
 }
 
+// ! NOTE INTERFACE
+// Represents a note or comment in the system
 export interface Note {
-  id: number;
-  user_id: string;
-  content: string;
-  date: string;
-  is_manager_note: boolean;
+  id: number; // Unique note identifier
+  user_id: string; // Reference to user ID
+  content: string; // Note content
+  date: string; // Note date
+  is_manager_note: boolean; // Flag for manager notes
   users?: {
-    name: string;
+    // Optional user details
+    name: string; // User's name from join
   };
 }
 
+// ! GENERAL MESSAGE INTERFACE
+// Represents system-wide announcements
 export interface GeneralMessage {
-  id: number;
-  message: string;
+  id: number; // Unique message identifier
+  message: string; // Message content
 }
 
+// ! SUPABASE RESPONSE INTERFACE
+// Generic type for Supabase query responses
 export interface SupabaseResponse<T> {
-  data: T | null;
-  error: Error | null;
+  data: T | null; // Response data of type T
+  error: Error | null; // Error information if any
 }
 
+// ! TIME FILTER PROPS INTERFACE
+// Props for TimeFilter component
 export interface TimeFilterProps {
-  shifts: Shift[];
-  onFilterChange: (filteredShifts: Shift[]) => void;
-  originalShifts: Shift[];
+  shifts: Shift[]; // Array of shifts to filter
+  onFilterChange: (filteredShifts: Shift[]) => void; // Filter change handler
+  originalShifts: Shift[]; // Original unfiltered shifts
 }
 
+// ! LOCATION STATISTICS INTERFACE
+// Represents location-based shift statistics
 export interface LocationStat {
-  location: string;
-  count: number;
-  percentage: string;
+  location: string; // Location name
+  count: number; // Number of shifts at location
+  percentage: string; // Percentage of total shifts
 }
 
+// ! CALENDAR CHANGE HANDLER TYPE
+// Type definition for calendar date change events
 export type CalendarChangeHandler = (
-  value: Date | null,
-  event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  value: Date | null, // Selected date
+  event: React.MouseEvent<HTMLButtonElement, MouseEvent> // Click event
 ) => void;
 
-// Time filter specific types
+// ! TIME-RELATED INTERFACES
+// Interface for time range selection
 export interface TimeRange {
-  startTime: string;
-  endTime: string;
+  startTime: string; // Range start time
+  endTime: string; // Range end time
 }
 
+// ! FILTERED SHIFTS INTERFACE
+// Holds different categories of filtered shifts
 export interface FilteredShifts {
-  timeFiltered: Shift[];
-  locationFiltered: Shift[];
+  timeFiltered: Shift[]; // Shifts filtered by time
+  locationFiltered: Shift[]; // Shifts filtered by location
 }

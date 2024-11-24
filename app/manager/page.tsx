@@ -1,5 +1,6 @@
 "use client";
 
+// ! IMPORTS
 import { useState, useEffect } from "react";
 import { useAuth } from "@/app/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -19,15 +20,23 @@ import Calendar from "react-calendar";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 
-// Chart colors for location indicators
+// ! CHART CONFIGURATION
+// Color palette for location statistics
 const CHART_COLORS = [
-  "#0088FE", // Blue
-  "#00C49F", // Green
-  "#FFBB28", // Yellow
-  "#FF8042", // Orange
-  "#8884d8", // Purple
+  "#0088FE", // Primary Blue
+  "#00C49F", // Emerald Green
+  "#FFBB28", // Warm Yellow
+  "#FF8042", // Sunset Orange
+  "#8884d8", // Soft Purple
+  "#e91e63", // Deep Pink
+  "#2ecc71", // Fresh Green
+  "#3498db", // Sky Blue
+  "#f1c40f", // Golden Yellow
+  "#9b59b6", // Royal Purple
 ];
 
+// ! TYPE DEFINITIONS
+// Extended note type with user information
 type EmployeeNote = {
   id: number;
   user_id: string;
@@ -38,26 +47,41 @@ type EmployeeNote = {
     name: string;
   };
 };
+
+// ! MAIN COMPONENT
 export default function ManagerDashboard() {
+  // ! STATE MANAGEMENT
+  // User and authentication
   const { user } = useAuth();
+
+  // Date and employee management
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [employees, setEmployees] = useState<User[]>([]);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
+
+  // Shifts management
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [filteredTimeShifts, setFilteredTimeShifts] = useState<Shift[]>([]);
   const [originalShifts, setOriginalShifts] = useState<Shift[]>([]);
+
+  // Notes management
   const [notes, setNotes] = useState<EmployeeNote[]>([]);
   const [newNote, setNewNote] = useState("");
-  const [generalMessage, setGeneralMessage] = useState("");
+  const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
+
+  // Location management
   const [selectedLocation, setSelectedLocation] = useState<string | "all">(
     "all"
   );
   const [locations, setLocations] = useState<string[]>([]);
+  const [locationStats, setLocationStats] = useState<LocationStat[]>([]);
+
+  // Messages and UI state
+  const [generalMessage, setGeneralMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [showMessageSuccess, setShowMessageSuccess] = useState(false);
-  const [locationStats, setLocationStats] = useState<LocationStat[]>([]);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
-  const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
 
+  // ! CALENDAR CONFIGURATION
   const calendarProps = {
     onChange: (value: any) => {
       if (value instanceof Date) {
@@ -68,17 +92,27 @@ export default function ManagerDashboard() {
     className: "shadow-sm rounded-lg p-4",
   } as const;
 
+  // ! TABLE CONFIGURATION
+  const shiftsTableColumns = [
+    { key: "user_id", label: "Employee ID" },
+    { key: "employeeName", label: "Name" },
+    { key: "location", label: "Location" },
+    { key: "time_in", label: "Time In" },
+    { key: "time_out", label: "Time Out" },
+  ];
+  // ! DATA FETCHING EFFECT
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Fetch all employees
+        // ! EMPLOYEE DATA FETCH
         const { data: employeesData } = await supabase
           .from("users")
           .select("*")
           .eq("role", "employee");
 
-        // Fetch shifts for selected date
+        // ! SHIFTS DATA FETCH
+        // Fetch shifts with user information
         const { data: shiftsData, error: shiftsError } = (await supabase
           .from("shifts")
           .select(
@@ -104,7 +138,7 @@ export default function ManagerDashboard() {
           return;
         }
 
-        // Format shifts data
+        // ! SHIFTS DATA FORMATTING
         const formattedShifts =
           shiftsData?.map((shift) => ({
             id: shift.id,
@@ -116,12 +150,14 @@ export default function ManagerDashboard() {
             location: shift.location,
           })) || [];
 
-        // Get unique locations
+        // ! LOCATION PROCESSING
+        // Extract unique locations
         const uniqueLocations = Array.from(
           new Set(formattedShifts.map((shift) => shift.location))
         );
 
-        // Calculate location statistics
+        // ! STATISTICS CALCULATION
+        // Calculate per-location statistics
         const locationCounts = uniqueLocations.map((location) => {
           const count = formattedShifts.filter(
             (shift) => shift.location === location
@@ -137,7 +173,7 @@ export default function ManagerDashboard() {
           };
         });
 
-        // Fetch notes
+        // ! NOTES DATA FETCH
         const { data: notesData } = await supabase
           .from("notes")
           .select(
@@ -155,12 +191,13 @@ export default function ManagerDashboard() {
           .eq("date", format(selectedDate, "yyyy-MM-dd"))
           .eq("is_manager_note", true);
 
-        // Fetch general message
+        // ! GENERAL MESSAGE FETCH
         const { data: messageData } = await supabase
           .from("general_messages")
           .select("*")
           .single();
 
+        // ! STATE UPDATES
         if (employeesData) setEmployees(employeesData);
         setShifts(formattedShifts);
         setOriginalShifts(formattedShifts);
@@ -192,6 +229,9 @@ export default function ManagerDashboard() {
 
     fetchData();
   }, [selectedDate]);
+
+  // ! NOTE MANAGEMENT HANDLERS
+  // Handle adding or updating notes
   const handleAddOrUpdateNote = async () => {
     if (!user || !selectedEmployeeId || !newNote.trim()) {
       alert("Please select an employee and enter a note");
@@ -200,6 +240,7 @@ export default function ManagerDashboard() {
 
     try {
       if (editingNoteId) {
+        // ! UPDATE EXISTING NOTE
         const { error } = await supabase
           .from("notes")
           .update({
@@ -219,6 +260,7 @@ export default function ManagerDashboard() {
 
         setEditingNoteId(null);
       } else {
+        // ! CREATE NEW NOTE
         const { data: newNoteData, error } = await supabase
           .from("notes")
           .insert([
@@ -261,6 +303,7 @@ export default function ManagerDashboard() {
         }
       }
 
+      // ! RESET FORM
       setNewNote("");
       setSelectedEmployeeId("");
     } catch (error) {
@@ -268,6 +311,7 @@ export default function ManagerDashboard() {
     }
   };
 
+  // ! NOTE EDITING HANDLERS
   const handleEditNote = (note: EmployeeNote) => {
     setEditingNoteId(note.id);
     setNewNote(note.content);
@@ -280,6 +324,7 @@ export default function ManagerDashboard() {
     setSelectedEmployeeId("");
   };
 
+  // ! GENERAL MESSAGE HANDLER
   const updateGeneralMessage = async () => {
     try {
       const { error } = await supabase
@@ -296,27 +341,22 @@ export default function ManagerDashboard() {
     }
   };
 
-  const shiftsTableColumns = [
-    { key: "user_id", label: "Employee ID" },
-    { key: "employeeName", label: "Name" },
-    { key: "location", label: "Location" },
-    { key: "time_in", label: "Time In" },
-    { key: "time_out", label: "Time Out" },
-  ];
-
+  // ! SHIFTS FILTERING
   const filteredShifts = filteredTimeShifts.filter((shift) =>
     selectedLocation === "all" ? true : shift.location === selectedLocation
   );
-
+  // ! MAIN RENDER
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* ! HEADER */}
       <Header title="Manager Dashboard" />
 
+      {/* ! MAIN CONTENT */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Sidebar */}
+          {/* ! LEFT SIDEBAR */}
           <div className="lg:col-span-1 space-y-8">
-            {/* Calendar */}
+            {/* ! CALENDAR SECTION */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4 text-center">
                 Schedule View
@@ -327,7 +367,7 @@ export default function ManagerDashboard() {
               </div>
             </div>
 
-            {/* Location Filter */}
+            {/* ! LOCATION FILTER */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Filters
@@ -348,14 +388,14 @@ export default function ManagerDashboard() {
               </select>
             </div>
 
-            {/* Time Filter */}
+            {/* ! TIME FILTER COMPONENT */}
             <TimeFilter
               shifts={shifts}
               onFilterChange={setFilteredTimeShifts}
               originalShifts={originalShifts}
             />
 
-            {/* Location Statistics */}
+            {/* ! LOCATION STATISTICS */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Location Statistics
@@ -373,6 +413,7 @@ export default function ManagerDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {/* ! LOCATION ROWS */}
                     {locationStats.map(({ location, count }, index) => (
                       <tr
                         key={location}
@@ -397,6 +438,7 @@ export default function ManagerDashboard() {
                         </td>
                       </tr>
                     ))}
+                    {/* ! TOTAL ROW */}
                     <tr className="bg-gray-50 dark:bg-gray-700">
                       <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                         Total
@@ -410,7 +452,7 @@ export default function ManagerDashboard() {
               </div>
             </div>
 
-            {/* General Message */}
+            {/* ! GENERAL MESSAGE SECTION */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 General Message
@@ -441,9 +483,9 @@ export default function ManagerDashboard() {
             </div>
           </div>
 
-          {/* Main Content */}
+          {/* ! MAIN CONTENT AREA */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Shifts Table */}
+            {/* ! SHIFTS TABLE */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Employee Shifts - {format(selectedDate, "MMMM d, yyyy")}
@@ -465,13 +507,13 @@ export default function ManagerDashboard() {
               )}
             </div>
 
-            {/* Manager Notes */}
+            {/* ! MANAGER NOTES SECTION */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Manager Notes
               </h2>
               <div className="space-y-4">
-                {/* Employee Selection and Note Input */}
+                {/* ! NOTE INPUT FORM */}
                 <div className="space-y-4">
                   <div className="flex flex-col space-y-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -493,6 +535,7 @@ export default function ManagerDashboard() {
                     </select>
                   </div>
 
+                  {/* ! NOTE INPUT */}
                   <div className="flex flex-col space-y-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {editingNoteId ? "Update Note" : "Add Note"}
@@ -529,7 +572,7 @@ export default function ManagerDashboard() {
                   </div>
                 </div>
 
-                {/* Notes List */}
+                {/* ! NOTES LIST */}
                 <div className="space-y-2 mt-4">
                   <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Notes for {format(selectedDate, "MMMM d, yyyy")}

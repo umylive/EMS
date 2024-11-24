@@ -1,52 +1,68 @@
+/* ! TAILWIND IMPORTS
+   Include Tailwind's base, components, and utilities styles */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Add smooth transition for theme changes */
+/* ! GLOBAL THEME TRANSITION
+      Add smooth animation for theme color changes */
 * {
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition for theme switching */
 }
 
-/* Calendar dark mode styles */
+/* ! CALENDAR DARK MODE STYLES
+      Styling for calendar component in dark mode */
+
+/* Main calendar container dark mode */
 .dark .react-calendar {
-  background-color: #1f2937;
-  color: white;
-  border-color: #374151;
+  background-color: #1f2937; /* Dark gray background */
+  color: white; /* White text */
+  border-color: #374151; /* Darker border color */
 }
 
+/* Calendar day tiles dark mode */
 .dark .react-calendar__tile {
-  color: white;
+  color: white; /* White text for all dates */
 }
 
+/* Hover and focus states for date tiles in dark mode */
 .dark .react-calendar__tile:enabled:hover,
 .dark .react-calendar__tile:enabled:focus {
-  background-color: #374151;
+  background-color: #374151; /* Slightly lighter gray for interaction */
 }
 
+/* Current date highlight in dark mode */
 .dark .react-calendar__tile--now {
-  background-color: #374151;
+  background-color: #374151; /* Slightly lighter gray for today */
 }
 
+/* Selected date in dark mode */
 .dark .react-calendar__tile--active {
-  background-color: #0284c7 !important;
-  color: white;
+  background-color: #0284c7 !important; /* Dark blue for selected date */
+  color: white; /* White text for contrast */
 }
 
+/* Navigation button hover/focus in dark mode */
 .dark .react-calendar__navigation button:enabled:hover,
 .dark .react-calendar__navigation button:enabled:focus {
-  background-color: #374151;
+  background-color: #374151; /* Slightly lighter gray for interaction */
 }
 
+/* Weekend dates in dark mode */
 .dark .react-calendar__month-view__days__day--weekend {
-  color: #f87171;
+  color: #f87171; /* Lighter red for weekend dates */
 }
 
-/* DataTable dark mode styles */
+/* ! DATATABLE DARK MODE STYLES
+      Styling for data table component in dark mode */
+
+/* Table header dark mode */
 .dark .datatable-header {
-  background-color: #1f2937;
-  color: white;
+  background-color: #1f2937; /* Dark gray background */
+  color: white; /* White text */
 }
 
+/* Table row hover effect in dark mode */
 .dark .datatable-row:hover {
-  background-color: #374151;
+  background-color: #374151; /* Slightly lighter gray on hover */
 }

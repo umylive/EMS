@@ -1,26 +1,36 @@
 "use client";
 
+// ! IMPORTS
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./hooks/useAuth";
 import ThemeToggle from "./components/shared/ThemeToggle";
 import { Loader2 } from "lucide-react";
 
+// ! MAIN LOGIN COMPONENT
 export default function LoginPage() {
+  // ! STATE MANAGEMENT
+  // Form input states
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
+  // UI states
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // ! HOOKS
   const router = useRouter();
   const { login } = useAuth();
 
+  // ! LOGIN HANDLER
+  // Handles form submission and authentication
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
-      // Special admin credentials for testing
+      // ! SPECIAL ADMIN LOGIN
+      // Hardcoded admin credentials for testing
       if (userId === "admin") {
         if (password === "admin") {
           router.push("/manager");
@@ -31,9 +41,12 @@ export default function LoginPage() {
         }
       }
 
-      // Regular user login
+      // ! REGULAR USER LOGIN
+      // Authenticate regular users
       const user = await login(userId, password);
 
+      // ! ROLE-BASED ROUTING
+      // Redirect based on user role
       if (user) {
         if (user.role === "manager") {
           router.push("/manager");
@@ -49,19 +62,27 @@ export default function LoginPage() {
     }
   };
 
+  // ! COMPONENT RENDER
   return (
+    // ! MAIN CONTAINER
+    // Full-screen container with gradient background
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      {/* Theme Toggle */}
+      {/* ! THEME TOGGLE
+          Fixed position in top-right corner */}
       <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
       </div>
 
-      {/* Login Card */}
+      {/* ! LOGIN CARD
+          Main login form container */}
       <div className="w-full max-w-md px-8">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6">
-          {/* Header */}
+          {/* ! HEADER SECTION
+              Logo and welcome text */}
           <div className="text-center space-y-2">
             <div className="flex justify-center">
+              {/* ! LOGO ICON
+                  Circular background with user icon */}
               <div className="w-20 h-20 bg-primary-600 dark:bg-primary-500 rounded-full flex items-center justify-center shadow-lg">
                 <svg
                   className="w-12 h-12 text-white"
@@ -87,9 +108,10 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Login Form */}
+          {/* ! LOGIN FORM */}
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-4">
+              {/* ! USER ID INPUT */}
               <div>
                 <label
                   htmlFor="userId"
@@ -110,6 +132,7 @@ export default function LoginPage() {
                 />
               </div>
 
+              {/* ! PASSWORD INPUT */}
               <div>
                 <label
                   htmlFor="password"
@@ -134,14 +157,16 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Error Message */}
+            {/* ! ERROR MESSAGE
+                Displayed when authentication fails */}
             {error && (
               <div className="bg-red-50 dark:bg-red-900/50 text-red-600 dark:text-red-400 p-3 rounded-md text-sm text-center">
                 {error}
               </div>
             )}
 
-            {/* Submit Button */}
+            {/* ! SUBMIT BUTTON
+                Shows loading state when authenticating */}
             <button
               type="submit"
               disabled={isLoading}
@@ -166,7 +191,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* ! FOOTER
+          Simple footer text */}
       <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
         Employee Management System
       </p>

@@ -1,33 +1,48 @@
+/* ! MAIN CALENDAR CONTAINER
+   Base styling for the entire calendar widget */
 .react-calendar {
-  width: 100%;
-  background: white;
-  border: none;
-  font-family: inherit;
+  width: 100%; /* Make calendar fill container width */
+  background: white; /* White background */
+  border: none; /* Remove default border */
+  font-family: inherit; /* Use parent element's font */
 }
 
+/* ! CALENDAR TILE (DAY CELLS)
+     Basic styling for individual day cells */
 .react-calendar__tile {
-  padding: 1em 0.5em;
+  padding: 1em 0.5em; /* Add comfortable padding around dates */
 }
 
+/* ! SELECTED/ACTIVE DATE
+     Styling for the currently selected date
+     !important used to override default styles */
 .react-calendar__tile--active {
-  background: #0ea5e9 !important;
-  color: white;
+  background: #0ea5e9 !important; /* Sky blue background */
+  color: white; /* White text for contrast */
 }
 
+/* ! CURRENT DATE
+     Styling for today's date */
 .react-calendar__tile--now {
-  background: #e0f2fe;
+  background: #e0f2fe; /* Light sky blue background */
 }
 
+/* ! WEEKEND DATES
+     Special styling for Saturday and Sunday */
 .react-calendar__month-view__days__day--weekend {
-  color: #ef4444;
+  color: #ef4444; /* Red text color for weekends */
 }
 
+/* ! NAVIGATION BUTTONS (MONTH/YEAR)
+     Hover and focus states for navigation buttons */
 .react-calendar__navigation button:enabled:hover,
 .react-calendar__navigation button:enabled:focus {
-  background-color: #e0f2fe;
+  background-color: #e0f2fe; /* Light sky blue background on interaction */
 }
 
+/* ! DATE TILES INTERACTION
+     Hover and focus states for clickable date tiles */
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
-  background-color: #e0f2fe;
+  background-color: #e0f2fe; /* Light sky blue background on interaction */
 }

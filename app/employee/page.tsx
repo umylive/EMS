@@ -1,5 +1,6 @@
 "use client";
 
+// ! IMPORTS
 import { useState, useEffect } from "react";
 import { useAuth } from "@/app/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -9,23 +10,29 @@ import Calendar from "react-calendar";
 import { format, parseISO, isSameDay } from "date-fns";
 import { Loader2 } from "lucide-react";
 
+// ! MAIN COMPONENT
 export default function EmployeeDashboard() {
+  // ! STATE MANAGEMENT
+  // Core auth state
   const { user } = useAuth();
+  // Date and shifts management
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [allMonthShifts, setAllMonthShifts] = useState<Shift[]>([]);
+  // Notes and announcements
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState("");
   const [announcements, setAnnouncements] = useState<GeneralMessage[]>([]);
+  // UI state
   const [isLoading, setIsLoading] = useState(true);
 
-  // Function to parse time string into hours
+  // ! TIME HELPER FUNCTIONS
   const parseTimeToHours = (timeStr: string) => {
     const [hours] = timeStr.split(":").map(Number);
     return hours;
   };
 
-  // Function to determine shift period
+  // ! SHIFT PERIOD DETERMINATION
   const getShiftPeriod = (timeIn: string) => {
     const startHour = parseTimeToHours(timeIn);
     if (startHour < 12) return "morning";
@@ -33,18 +40,18 @@ export default function EmployeeDashboard() {
     return "evening";
   };
 
+  // ! CALENDAR TILE CLASS HANDLER
   const getTileClassName = ({ date }: { date: Date }) => {
     const shiftsForDay = allMonthShifts.filter((shift) =>
       isSameDay(parseISO(shift.date), date)
     );
-
     if (shiftsForDay.length === 0) return "";
-
-    const shift = shiftsForDay[0]; // Use the first shift of the day
+    const shift = shiftsForDay[0];
     const period = getShiftPeriod(shift.time_in);
     return `work-day shift-${period}`;
   };
 
+  // ! CALENDAR CONFIGURATION
   const calendarProps = {
     onChange: (value: any) => {
       if (value instanceof Date) {
@@ -56,13 +63,13 @@ export default function EmployeeDashboard() {
     tileClassName: getTileClassName,
   } as const;
 
+  // ! DATA FETCHING EFFECT
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
-
       setIsLoading(true);
       try {
-        // Fetch all shifts for the current month
+        // Calculate month range
         const startOfMonth = new Date(
           selectedDate.getFullYear(),
           selectedDate.getMonth(),
@@ -74,6 +81,8 @@ export default function EmployeeDashboard() {
           0
         );
 
+        // ! PARALLEL DATA FETCHING
+        // Monthly shifts
         const { data: monthShiftsData } = await supabase
           .from("shifts")
           .select("*")
@@ -81,25 +90,26 @@ export default function EmployeeDashboard() {
           .gte("date", format(startOfMonth, "yyyy-MM-dd"))
           .lte("date", format(endOfMonth, "yyyy-MM-dd"));
 
-        // Fetch shifts for the selected date
+        // Daily shifts
         const { data: shiftsData } = await supabase
           .from("shifts")
           .select("*")
           .eq("user_id", user.id)
           .eq("date", format(selectedDate, "yyyy-MM-dd"));
 
-        // Fetch notes
+        // Notes
         const { data: notesData } = await supabase
           .from("notes")
           .select("*")
           .eq("date", format(selectedDate, "yyyy-MM-dd"))
           .or(`user_id.eq.${user.id},is_manager_note.eq.true`);
 
-        // Fetch announcements
+        // Announcements
         const { data: announcementsData } = await supabase
           .from("general_messages")
           .select("*");
 
+        // ! STATE UPDATES
         if (monthShiftsData) setAllMonthShifts(monthShiftsData);
         if (shiftsData) setShifts(shiftsData);
         if (notesData) setNotes(notesData);
@@ -114,9 +124,9 @@ export default function EmployeeDashboard() {
     fetchData();
   }, [selectedDate, user]);
 
+  // ! NOTE HANDLING
   const handleAddNote = async () => {
     if (!user || !newNote.trim()) return;
-
     try {
       const { data, error } = await supabase
         .from("notes")
@@ -143,22 +153,28 @@ export default function EmployeeDashboard() {
       console.error("Error adding note:", error);
     }
   };
-
+  // ! MAIN RENDER
   return (
+    // ! ROOT CONTAINER
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* ! HEADER COMPONENT */}
       <Header title="Employee Dashboard" />
 
+      {/* ! MAIN CONTENT */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Calendar and Shifts Section */}
+          {/* ! LEFT COLUMN - Calendar and Shifts */}
           <div className="space-y-8">
+            {/* ! CALENDAR SECTION */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4 text-center">
                 Schedule View
               </h2>
               <div className="flex justify-center">
                 <div className="w-full max-w-md">
+                  {/* ! CALENDAR STYLES */}
                   <style jsx global>{`
+                    /* Base calendar styles */
                     .react-calendar {
                       width: 100%;
                       max-width: 100%;
@@ -167,6 +183,7 @@ export default function EmployeeDashboard() {
                       font-family: inherit;
                     }
 
+                    /* Navigation styles */
                     .react-calendar__navigation {
                       display: flex;
                       justify-content: center;
@@ -181,6 +198,7 @@ export default function EmployeeDashboard() {
                       color: inherit;
                     }
 
+                    /* Button states */
                     .react-calendar__navigation button:disabled {
                       background-color: transparent;
                     }
@@ -191,6 +209,7 @@ export default function EmployeeDashboard() {
                       border-radius: 8px;
                     }
 
+                    /* Calendar grid styles */
                     .react-calendar__month-view__weekdays {
                       text-align: center;
                       text-transform: uppercase;
@@ -206,11 +225,11 @@ export default function EmployeeDashboard() {
                       border-radius: 8px;
                     }
 
+                    /* Shift indicators */
                     .work-day {
                       font-weight: 500;
                     }
 
-                    /* Shift period styles */
                     .shift-morning {
                       background-color: rgba(255, 182, 71, 0.2) !important;
                     }
@@ -236,6 +255,7 @@ export default function EmployeeDashboard() {
                       background-color: rgba(155, 89, 182, 0.3) !important;
                     }
 
+                    /* Active states */
                     .react-calendar__tile--now {
                       background: rgb(59 130 246 / 0.1);
                     }
@@ -250,14 +270,19 @@ export default function EmployeeDashboard() {
                       background: #1d4ed8 !important;
                     }
                   `}</style>
+
+                  {/* ! CALENDAR COMPONENT */}
                   <Calendar {...calendarProps} />
                 </div>
               </div>
+
+              {/* ! CALENDAR LEGEND */}
               <div className="text-center mt-4 space-y-2">
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Selected Date: {format(selectedDate, "MMMM d, yyyy")}
                 </div>
                 <div className="flex justify-center flex-wrap gap-4 text-xs">
+                  {/* Shift type indicators */}
                   <div className="flex items-center">
                     <div className="w-4 h-4 bg-orange-200 dark:bg-orange-900/30 rounded mr-2"></div>
                     <span>Morning Shift (Before 12 PM)</span>
@@ -274,6 +299,7 @@ export default function EmployeeDashboard() {
               </div>
             </div>
 
+            {/* ! SHIFTS TABLE SECTION */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Shifts for {format(selectedDate, "MMMM d, yyyy")}
@@ -326,13 +352,15 @@ export default function EmployeeDashboard() {
             </div>
           </div>
 
-          {/* Notes and Announcements Section */}
+          {/* ! RIGHT COLUMN - Notes and Announcements */}
           <div className="space-y-8">
+            {/* ! NOTES SECTION */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Notes
               </h2>
               <div className="space-y-4">
+                {/* Note input form */}
                 <div className="flex space-x-2">
                   <input
                     type="text"
@@ -352,6 +380,8 @@ export default function EmployeeDashboard() {
                     Add
                   </button>
                 </div>
+
+                {/* Notes list */}
                 <div className="space-y-2">
                   {notes.map((note) => (
                     <div
@@ -381,6 +411,7 @@ export default function EmployeeDashboard() {
               </div>
             </div>
 
+            {/* ! ANNOUNCEMENTS SECTION */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Announcements

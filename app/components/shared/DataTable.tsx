@@ -2,15 +2,20 @@
 
 import { useState } from "react";
 
+// ! INTERFACES
+// Defines the structure for table columns with a key and display label
 interface Column {
   key: string;
   label: string;
 }
 
+// ! Base interface for table data - requires an id field
 interface TableData {
   id: number | string;
 }
 
+// ! Props interface for the DataTable component
+// Generic type T extends TableData to ensure all data items have an id
 interface DataTableProps<T extends TableData> {
   columns: Column[];
   data: T[];
@@ -18,17 +23,23 @@ interface DataTableProps<T extends TableData> {
   rowsPerPage?: number;
 }
 
+// ! MAIN COMPONENT
+// Generic DataTable component that accepts any data type extending TableData
 export default function DataTable<T extends TableData>({
   columns,
   data,
   onRowClick,
   rowsPerPage = 10,
 }: DataTableProps<T>) {
+  // ! STATE MANAGEMENT
+  // Controls for sorting, pagination, and search functionality
   const [sortKey, setSortKey] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // ! SORTING HANDLER
+  // Manages column sorting logic - toggles order if same column, resets if new column
   const handleSort = (key: string) => {
     if (sortKey === key) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -38,13 +49,15 @@ export default function DataTable<T extends TableData>({
     }
   };
 
-  // Format cell value for display
+  // ! CELL VALUE FORMATTER
+  // Converts any cell value to a string representation, handling null/undefined
   const formatCellValue = (value: unknown): string => {
     if (value === undefined || value === null) return "";
     return String(value);
   };
 
-  // Filter and sort data
+  // ! DATA PROCESSING
+  // Applies filtering and sorting to the data array
   const filteredAndSortedData = [...data]
     .filter((item) =>
       Object.values(item).some((value) =>
@@ -62,14 +75,16 @@ export default function DataTable<T extends TableData>({
         : bValue.localeCompare(aValue);
     });
 
-  // Pagination
+  // ! PAGINATION LOGIC
+  // Calculates total pages and current page's data slice
   const totalPages = Math.ceil(filteredAndSortedData.length / rowsPerPage);
   const paginatedData = filteredAndSortedData.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
 
-  // Generate page numbers for pagination
+  // ! PAGINATION HELPER
+  // Generates array of visible page numbers with smart truncation
   const getPageNumbers = () => {
     const pageNumbers = [];
     const maxVisiblePages = 5;
@@ -87,9 +102,10 @@ export default function DataTable<T extends TableData>({
     return pageNumbers;
   };
 
+  // ! COMPONENT RENDER
   return (
     <div className="space-y-4">
-      {/* Search and Info */}
+      {/* ! SEARCH AND INFO SECTION */}
       <div className="flex justify-between items-center">
         <div className="relative">
           <input
@@ -113,9 +129,10 @@ export default function DataTable<T extends TableData>({
         </div>
       </div>
 
-      {/* Table */}
+      {/* ! MAIN TABLE SECTION */}
       <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          {/* ! TABLE HEADER */}
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
               {columns.map((column) => (
@@ -137,6 +154,7 @@ export default function DataTable<T extends TableData>({
               ))}
             </tr>
           </thead>
+          {/* ! TABLE BODY */}
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {paginatedData.length > 0 ? (
               paginatedData.map((row, index) => (
@@ -173,7 +191,7 @@ export default function DataTable<T extends TableData>({
         </table>
       </div>
 
-      {/* Pagination */}
+      {/* ! PAGINATION CONTROLS */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <button
